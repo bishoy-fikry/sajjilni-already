@@ -145,6 +145,10 @@ export default function App() {
 
   const handleLogout = () => {
     if (window.confirm('هل تريد تسجيل خروج الخادم الحالي؟')) {
+      void fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'same-origin',
+      }).catch(() => undefined);
       const updated = {
         ...database,
         activeServantSession: null,
@@ -314,6 +318,7 @@ export default function App() {
                 onUpdateMember={handleUpdateMember}
                 onDeleteMember={handleDeleteMember}
                 currentServant={currentServant}
+                onRequestLogin={() => setIsLoginModalOpen(true)}
               />
             )}
 

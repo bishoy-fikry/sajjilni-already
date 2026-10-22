@@ -1,0 +1,21 @@
+[
+ {"month":1,"day":1,"name":"عيد النيروز (رأس السنة القبطية)","kind":"feast"},
+ {"month":1,"day":2,"name":"استشهاد يوحنا المعمدان","kind":"saint"},
+ {"month":1,"day":17,"name":"عيد الصليب المجيد","kind":"feast"},
+ {"month":3,"day":12,"name":"عيد رئيس الملائكة ميخائيل","kind":"saint"},
+ {"month":3,"day":15,"name":"استشهاد مارمينا العجايبي","kind":"saint"},
+ {"month":4,"day":29,"name":"عيد الميلاد المجيد","kind":"major_lord"},
+ {"month":5,"day":6,"name":"عيد الختان","kind":"minor_lord"},
+ {"month":5,"day":11,"name":"عيد الغطاس المجيد","kind":"major_lord"},
+ {"month":5,"day":13,"name":"عيد عرس قانا الجليل","kind":"major_lord"},
+ {"month":6,"day":8,"name":"عيد دخول المسيح الهيكل","kind":"major_lord"},
+ {"month":7,"day":10,"name":"عيد ظهور الصليب (اكتشاف الصليب)","kind":"feast"},
+ {"month":7,"day":29,"name":"عيد البشارة","kind":"major_lord"},
+ {"month":8,"day":23,"name":"استشهاد مارجرجس","kind":"saint"},
+ {"month":8,"day":30,"name":"استشهاد القديس مرقس الرسول","kind":"saint"},
+ {"month":9,"day":7,"name":"نياحة البابا أثناسيوس الرسولي","kind":"saint"},
+ {"month":9,"day":24,"name":"عيد دخول السيد المسيح أرض مصر","kind":"major_lord"},
+ {"month":11,"day":5,"name":"عيد الرسولين بطرس وبولس","kind":"feast"},
+ {"month":12,"day":13,"name":"عيد التجلي","kind":"major_lord"},
+ {"month":12,"day":16,"name":"عيد نياحة السيدة العذراء (الصعود)","kind":"feast"}
+]

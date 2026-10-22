@@ -16,9 +16,11 @@ import {
   CheckCircle2,
   X,
   Printer,
+  BookOpen,
 } from 'lucide-react';
 import { exportMembersToCSV } from '../services/storage';
 import { QRCodeView } from './QRCodeView';
+import { GuideChat } from './GuideChat';
 
 interface MembersListProps {
   stage: ServiceStage;
@@ -29,6 +31,7 @@ interface MembersListProps {
   onDeleteMember: (memberId: string) => void;
   currentServant: CurrentServant | null;
   onSelectMemberForAttendance?: (memberId: string) => void;
+  onRequestLogin: () => void;
 }
 
 export const MembersList: React.FC<MembersListProps> = ({
@@ -39,7 +42,9 @@ export const MembersList: React.FC<MembersListProps> = ({
   onUpdateMember,
   onDeleteMember,
   currentServant,
+  onRequestLogin,
 }) => {
+  const [activeSection, setActiveSection] = useState<'directory' | 'guide'>('directory');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterGender, setFilterGender] = useState<'all' | 'male' | 'female'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'needs_care'>('all');
@@ -174,6 +179,43 @@ export const MembersList: React.FC<MembersListProps> = ({
 
   return (
     <div className="space-y-6 text-white">
+      <div className="flex flex-wrap gap-2 rounded-2xl border border-white/10 bg-slate-900/60 p-2">
+        <button
+          type="button"
+          aria-pressed={activeSection === 'directory'}
+          onClick={() => setActiveSection('directory')}
+          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition ${
+            activeSection === 'directory'
+              ? 'bg-rose-700 text-white shadow-lg shadow-rose-950/30'
+              : 'text-slate-300 hover:bg-white/5'
+          }`}
+        >
+          <Users className="h-4 w-4" />
+          سجل المخدومين
+        </button>
+        <button
+          type="button"
+          aria-pressed={activeSection === 'guide'}
+          onClick={() => setActiveSection('guide')}
+          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition ${
+            activeSection === 'guide'
+              ? 'bg-rose-700 text-white shadow-lg shadow-rose-950/30'
+              : 'text-slate-300 hover:bg-white/5'
+          }`}
+        >
+          <BookOpen className="h-4 w-4" />
+          اسأل المرشد
+        </button>
+      </div>
+
+      {activeSection === 'guide' ? (
+        <GuideChat
+          stage={stage}
+          sessionKey={currentServant?.id ?? ''}
+          onRequestLogin={onRequestLogin}
+        />
+      ) : (
+        <>
       {/* Top Header Card */}
       <div className="bg-slate-900/60 backdrop-blur-md rounded-3xl border border-white/10 p-5 sm:p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -684,6 +726,8 @@ export const MembersList: React.FC<MembersListProps> = ({
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

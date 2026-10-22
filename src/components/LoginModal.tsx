@@ -30,66 +30,82 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const [stageId, setStageId] = useState(currentSession?.assignedStageId || 'ss_kg');
   const [churchName, setChurchName] = useState(currentSession?.churchName || '');
   const [errorMsg, setErrorMsg] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isDark = theme === 'dark';
   const filteredStages = ALL_STAGES.filter((s) => s.category === category);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanPass = passcode.trim();
-
-    // 1. Secret Owner Backdoor Login (Code: 10, Name: بيشوي فكري)
-    // Completely invisible in the UI, nobody knows it exists
-    if (cleanPass === '10') {
-      const ownerName = name.trim() || 'بيشوي فكري';
-      const ownerSession: CurrentServant = {
-        id: currentSession?.id || `srv_owner_${Date.now()}`,
-        name: ownerName,
-        phone: phone.trim() || '01000000000',
-        role: 'general_admin', // Master Owner role with access to all stages
-        assignedCategory: category,
-        assignedStageId: 'all',
-        churchName: churchName.trim(),
-      };
-
-      onSaveSession(ownerSession);
-      if (onClose) onClose();
-      return;
-    }
-
-    // 2. Regular Servant (Code: 1100)
-    if (selectedRole === 'servant') {
-      if (cleanPass !== '1100') {
-        setErrorMsg('كود الخادم غير صحيح! يرجى إدخال كود الدخول الخاص بك.');
-        return;
-      }
-    }
-
-    // 3. Supervisor & Assistant Supervisor (Code: 2110)
-    if (selectedRole === 'stage_supervisor') {
-      if (cleanPass !== '2110') {
-        setErrorMsg('كود الأمين غير صحيح! يرجى إدخال كود الدخول الخاص بالأمناء.');
-        return;
-      }
-    }
-
     if (!name.trim()) {
       setErrorMsg('يرجى إدخال اسم الخادم.');
       return;
     }
+    if (!cleanPass) {
+      setErrorMsg('أدخل كود التحقق للمتابعة.');
+      return;
+    }
 
-    const session: CurrentServant = {
-      id: currentSession?.id || `srv_local_${Date.now()}`,
-      name: name.trim(),
-      phone: phone.trim() || '01000000000',
-      role: selectedRole,
-      assignedCategory: category,
-      assignedStageId: stageId,
-      churchName: churchName.trim(),
-    };
+    setIsSubmitting(true);
+    setErrorMsg('');
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          passcode: cleanPass,
+          requestedRole: selectedRole,
+          stageId,
+          category,
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const error = payload?.error;
+        if (error === 'invalid_login') {
+          setErrorMsg('كود التحقق غير صحيح أو غير مخوّل لهذه المرحلة.');
+        } else if (error === 'login_unavailable') {
+          setErrorMsg('تسجيل الدخول غير مهيأ على الخادم بعد. راجع إعدادات أسرار الدخول.');
+        } else if (error === 'login_rate_limited') {
+          setErrorMsg('محاولات كثيرة. انتظر قليلًا ثم حاول مرة أخرى.');
+        } else {
+          setErrorMsg('تعذر إتمام تسجيل الدخول الآن. تحقق من الاتصال وحاول مجددًا.');
+        }
+        return;
+      }
 
-    onSaveSession(session);
-    if (onClose) onClose();
+      const serverSession = payload?.session;
+      const validRoles: ServantRole[] = ['servant', 'stage_supervisor', 'general_admin'];
+      const validCategory = CATEGORIES_CONFIG.some((item) => item.id === serverSession?.assignedCategory);
+      if (
+        typeof serverSession?.id !== 'string' ||
+        !validRoles.includes(serverSession?.role) ||
+        !validCategory ||
+        typeof serverSession?.assignedStageId !== 'string'
+      ) {
+        setErrorMsg('استجابة الخادم غير مكتملة. حاول مرة أخرى.');
+        return;
+      }
+
+      const session: CurrentServant = {
+        id: serverSession.id,
+        name: name.trim(),
+        phone: phone.trim(),
+        role: serverSession.role as ServantRole,
+        assignedCategory: serverSession.assignedCategory as ServiceCategory,
+        assignedStageId: serverSession.assignedStageId,
+        churchName: churchName.trim(),
+      };
+      setPasscode('');
+      onSaveSession(session);
+      if (onClose) onClose();
+    } catch {
+      setErrorMsg('تعذر الاتصال بخادم تسجيل الدخول. تحقق من اتصال الإنترنت وحاول مجددًا.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -123,7 +139,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             تسجيل دخول الخدمة
           </h2>
           <p className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            سجل بياناتك وأدخل كود التحقق الخاص بك للمتابعة
+            أدخل كودك للتحقق من الخادم. الاسم والهاتف لا يُرسلان مع أسئلة المرشد.
           </p>
         </div>
 
@@ -137,6 +153,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             <div className="relative">
               <input
                 type="text"
+                required
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value);
@@ -334,10 +351,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           <div className="pt-2 flex items-center gap-3">
             <button
               type="submit"
+              disabled={isSubmitting}
               className="flex-1 py-3 px-4 bg-gradient-to-r from-rose-700 to-rose-800 hover:from-rose-600 hover:to-rose-700 text-white font-bold rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer border border-rose-500/30"
             >
               <CheckCircle2 className="w-5 h-5" />
-              <span>دخول وبدء الخدمة</span>
+              <span>{isSubmitting ? 'جارٍ التحقق…' : 'دخول وبدء الخدمة'}</span>
             </button>
             {canCancel && onClose && (
               <button
